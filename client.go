@@ -61,6 +61,10 @@ func NewCustomClient(url, username, password string, customHttpClient *http.Clie
 	return
 }
 
+type RawData struct {
+	data []byte
+}
+
 // sendRequest sends a request of type "method"
 // to the url "client.url+uri" and with optional data "data"
 // Returns an error if any and the optional data "v"
@@ -104,9 +108,13 @@ func (c *Client) sendRequest(method, uri string, data, v interface{}) error {
 	}
 
 	if v != nil {
-		err = json.Unmarshal(jsonCnt, v)
-		if err != nil {
-			return fmt.Errorf("unmarshaling response: %s", err)
+		if rd, ok := v.(*RawData); ok { // return as is
+			rd.data = jsonCnt
+		} else { //parse
+			err = json.Unmarshal(jsonCnt, v)
+			if err != nil {
+				return fmt.Errorf("unmarshaling response: %s", err)
+			}
 		}
 	}
 
